@@ -224,12 +224,17 @@ export default function PomodoroApp() {
 
   // --- Document Title Sync ---
   useEffect(() => {
+    if (!isRunning) {
+      document.title = 'Pomotechnique';
+      return;
+    }
+
     const mins = Math.floor(timeLeft / 60);
     const secs = timeLeft % 60;
     const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     const labels = { focus: t.modes.focus, short: t.modes.short, long: t.modes.long };
     document.title = `${formatted} - ${labels[mode]} | Pomotechnique`;
-  }, [timeLeft, mode, isDebug, t]);
+  }, [isRunning, timeLeft, mode, t]);
 
   const toggleTimer = () => setIsRunning((prev) => !prev);
 
@@ -239,8 +244,9 @@ export default function PomodoroApp() {
   };
 
   const skipToNextPhase = () => {
-    setIsRunning(false);
     const targetDurations = getDurations(settings, isDebug);
+    let shouldAutoStart = false;
+
     if (mode === 'focus') {
       const nextCycles = completedCycles + 1;
       setCompletedCycles(nextCycles);
@@ -248,10 +254,14 @@ export default function PomodoroApp() {
       const nextMode = nextCycles % interval === 0 ? 'long' : 'short';
       setMode(nextMode);
       setTimeLeft(targetDurations[nextMode]);
+      shouldAutoStart = settings.autoStartBreaks;
     } else {
       setMode('focus');
       setTimeLeft(targetDurations.focus);
+      shouldAutoStart = settings.autoStartPomodoros;
     }
+
+    setIsRunning(shouldAutoStart);
   };
 
   const toggleDebugMode = () => {
